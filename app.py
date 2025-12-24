@@ -52,7 +52,7 @@ def format_pod_stage_summary(data):
                 poc_mentions = "_POC not defined_"
 
             lines.append(
-                f"    • {readable_stage} — {count} | POC: {poc_mentions}"
+                f"    • {readable_stage} — {count} {poc_mentions}"
             )
 
         lines.append("")
