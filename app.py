@@ -13,38 +13,59 @@ USER_ID = os.getenv("USER_ID")
 
 app = App(token=SLACK_BOT_TOKEN)
 
+def get_poc_user_ids(pod, stage):
+    pod_key = pod.upper().replace(" ", "_")
+    stage_key = stage.upper().replace(" ", "_")
+
+    env_key = f"POC_{pod_key}_{stage_key}"
+    raw_value = os.getenv(env_key)
+
+    # print(f"[DEBUG] {env_key} = {raw_value}")
+    # print(f"{stage} - {stage_key}\n")
+    # print(f"{pod} - {pod_key}\n")
+    # print(f"{env_key}\n")
+
+    if not raw_value:
+        return []
+
+    return [uid.strip() for uid in raw_value.split(",") if uid.strip()]
+
 def format_pod_stage_summary(data):
+    # print("[DEBUG] inside format_pod_stage_summary")
+
     lines = []
 
     for pod, pod_data in data.items():
         total = pod_data.get("total", 0)
-
-        # Skip empty pods
         if total == 0:
             continue
 
-        # POD heading
         lines.append(f"*{pod}* ({total})")
 
-        # Stage breakdown
         for stage, count in pod_data.get("stages", {}).items():
             readable_stage = stage.replace("_", " ").title()
-            lines.append(f"    • {readable_stage} — {count}")
+            poc_user_ids = get_poc_user_ids(pod, stage)
 
-        # Blank line between pods
+            if poc_user_ids:
+                poc_mentions = " ".join(f"<@{uid}>" for uid in poc_user_ids)
+            else:
+                poc_mentions = "_POC not defined_"
+
+            lines.append(
+                f"    • {readable_stage} — {count} | POC: {poc_mentions}"
+            )
+
         lines.append("")
 
     return "\n".join(lines).strip()
 
-
 def post_message_on_start(summary):
-
     if not CHANNEL_ID:
-        print("CHANNEL_ID is missing. Add it to your .env file.")
+        print("CHANNEL_ID missing")
         return
 
     if not summary:
-        text = "Hello <@{}>! No ticket data found.".format(USER_ID)
+        text = f"Hello <@{USER_ID}>! No ticket data found."
     else:
         formatted_text = format_pod_stage_summary(summary)
         text = (
@@ -60,8 +81,5 @@ def post_message_on_start(summary):
 
 if __name__ == "__main__":
     result = fetch_devrev_tickets()
-
     post_message_on_start(result)
-
-    # Keep Slack app alive
     SocketModeHandler(app, SLACK_APP_TOKEN).start()
