@@ -70,10 +70,11 @@ def modify_result(results):
 
 def fetch_devrev_tickets():
     response = requests.post(
-        DEVREV_API_URL,
-        headers=REQUEST_HEADERS,
-        json=REQUEST_BODY
-    )
+    DEVREV_API_URL,
+    headers=REQUEST_HEADERS,
+    json=REQUEST_BODY,
+    timeout=15
+)
     response.raise_for_status()
 
     aggregated = modify_result(response.json())

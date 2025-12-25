@@ -1,0 +1,53 @@
+name: Slackbot automation
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  slackbot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - run: pip install -r requirements.txt
+
+      - name: Run Slack bot
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          USER_ID: ${{ secrets.USER_ID }}
+          DEVREV_API_TOKEN: ${{ secrets.DEVREV_API_TOKEN }}
+
+          POC_WMS_INBOUND_AWAITING_CUSTOMER_RESPONSE: ${{ secrets.POC_WMS_INBOUND_AWAITING_CUSTOMER_RESPONSE }}
+          POC_WMS_OUTBOUND_AWAITING_CUSTOMER_RESPONSE: ${{ secrets.POC_WMS_OUTBOUND_AWAITING_CUSTOMER_RESPONSE }}
+
+          POC_WMS_INBOUND_AWAITING_DEVELOPMENT: ${{ secrets.POC_WMS_INBOUND_AWAITING_DEVELOPMENT }}
+          POC_WMS_OUTBOUND_AWAITING_DEVELOPMENT: ${{ secrets.POC_WMS_OUTBOUND_AWAITING_DEVELOPMENT }}
+
+          POC_WMS_INBOUND_QUEUED: ${{ secrets.POC_WMS_INBOUND_QUEUED }}
+          POC_WMS_OUTBOUND_QUEUED: ${{ secrets.POC_WMS_OUTBOUND_QUEUED }}
+
+          POC_WMS_INBOUND_IN_DEVELOPMENT: ${{ secrets.POC_WMS_INBOUND_IN_DEVELOPMENT }}
+          POC_WMS_OUTBOUND_IN_DEVELOPMENT: ${{ secrets.POC_WMS_OUTBOUND_IN_DEVELOPMENT }}
+
+          POC_WMS_INBOUND_WORK_IN_PROGRESS: ${{ secrets.POC_WMS_INBOUND_WORK_IN_PROGRESS }}
+          POC_WMS_OUTBOUND_WORK_IN_PROGRESS: ${{ secrets.POC_WMS_OUTBOUND_WORK_IN_PROGRESS }}
+
+          POC_WMS_INBOUND_REOPEN: ${{ secrets.POC_WMS_INBOUND_REOPEN }}
+          POC_WMS_OUTBOUND_REOPEN: ${{ secrets.POC_WMS_OUTBOUND_REOPEN }}
+
+          POC_WMS_INBOUND_AWAITING_PRODUCT_ASSIST: ${{ secrets.POC_WMS_INBOUND_AWAITING_PRODUCT_ASSIST }}
+          POC_WMS_OUTBOUND_AWAITING_PRODUCT_ASSIST: ${{ secrets.POC_WMS_OUTBOUND_AWAITING_PRODUCT_ASSIST }}
+
+          POC_WMS_INBOUND_REASSIGNED_TO_CUSTOMER_SUPPORT: ${{ secrets.POC_WMS_INBOUND_REASSIGNED_TO_CUSTOMER_SUPPORT }}
+          POC_WMS_OUTBOUND_REASSIGNED_TO_CUSTOMER_SUPPORT: ${{ secrets.POC_WMS_OUTBOUND_REASSIGNED_TO_CUSTOMER_SUPPORT }}
+
+        run: python app.py
