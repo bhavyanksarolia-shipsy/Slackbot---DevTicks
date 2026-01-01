@@ -10,9 +10,7 @@ DEVREV_API_URL = "https://api.devrev.ai/works.list"
 
 REQUEST_BODY = {
     "type": "ticket",
-    "ticket": {
-        "subtype": "Support"
-    },
+    "ticket": {"subtype": "Support"},
     "stage": {
         "name": [
             "awaiting_customer_response",
@@ -36,8 +34,6 @@ REQUEST_HEADERS = {
 }
 
 def modify_result(results):
-    # print("[DEBUG] inside modify_result")
-
     VALID_STAGES = {
         "awaiting_customer_response",
         "queued",
@@ -51,7 +47,8 @@ def modify_result(results):
 
     VALID_PODS = {"WMS Inbound", "WMS Outbound", "WMS"}
 
-    output = {}
+    pod_stage_summary = {}
+    pod_account_summary = {}
 
     for ticket in results.get("works", []):
         pod = ticket.get("custom_fields", {}).get("tnt__pod")
@@ -62,21 +59,37 @@ def modify_result(results):
         if stage not in VALID_STAGES:
             continue
 
-        output.setdefault(pod, {"total": 0, "stages": {}})
-        output[pod]["total"] += 1
-        output[pod]["stages"][stage] = output[pod]["stages"].get(stage, 0) + 1
+        account_name = (
+            ticket.get("account", {}).get("display_name")
+            or ticket.get("rev_org", {}).get("display_name")
+            or "Unknown Account"
+        )
 
-    return output
+        # POD + STAGE
+        pod_stage_summary.setdefault(pod, {"total": 0, "stages": {}})
+        pod_stage_summary[pod]["total"] += 1
+        pod_stage_summary[pod]["stages"][stage] = (
+            pod_stage_summary[pod]["stages"].get(stage, 0) + 1
+        )
+
+        # POD + ACCOUNT
+        pod_account_summary.setdefault(pod, {})
+        pod_account_summary[pod][account_name] = (
+            pod_account_summary[pod].get(account_name, 0) + 1
+        )
+
+    return {
+        "pod_stage": pod_stage_summary,
+        "pod_account": pod_account_summary,
+    }
 
 def fetch_devrev_tickets():
     response = requests.post(
-    DEVREV_API_URL,
-    headers=REQUEST_HEADERS,
-    json=REQUEST_BODY,
-    timeout=15
-)
+        DEVREV_API_URL,
+        headers=REQUEST_HEADERS,
+        json=REQUEST_BODY,
+        timeout=15,
+    )
     response.raise_for_status()
 
-    aggregated = modify_result(response.json())
-    # print("[DEBUG] fetch_devrev_tickets completed")
-    return aggregated
+    return modify_result(response.json())
