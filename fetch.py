@@ -43,6 +43,7 @@ def modify_result(results):
         "Reopen",
         "awaiting_product_assist",
         "Reassigned to Customer Support",
+        "resolved",
     }
 
     VALID_PODS = {"WMS Inbound", "WMS Outbound", "WMS"}
